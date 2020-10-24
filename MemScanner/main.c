@@ -222,20 +222,14 @@ NTSTATUS MmsInitDynamicData(IN OUT PDYNAMIC_DATA pData)
         // Windows 7 SP1
     case WINVER_7:
     case WINVER_7_SP1:
-
-        status = MmsInitMemoryLayoutForWin7AndWin8(pData);
         break;
 
         // Windows 8
     case WINVER_8:
-
-        status = MmsInitMemoryLayoutForWin7AndWin8(pData);
         break;
 
         // Windows 8.1
     case WINVER_81:
-
-        status = MmsInitMemoryLayoutForWin8_1ToWin10TH2(pData);
         break;
 
         // Windows 10, build 16299/15063/14393/10586/10140
