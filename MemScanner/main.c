@@ -2,12 +2,14 @@
 #include "Private.h"
 #include "Import.h"
 #include "Utils.h"
+#include "DriverScanner.h"
 #include <ntimage.h>
 
 
 
 // OS Dependant data
-DYNAMIC_DATA dynData;
+DYNAMIC_DATA     dynData        = { 0 };
+PDRIVER_OBJECT   g_DriverObject = NULL;
 
 CHAR* g_szAssignedRegionNames[] = {
     "AssignedRegionNonPagedPool",
@@ -41,10 +43,12 @@ NTSTATUS MmsInitMemoryLayoutForWin8_1ToWin10TH2(IN OUT PDYNAMIC_DATA pData);
 NTSTATUS MmsInitMemoryLayoutForWin10RS1AndLater(IN OUT PDYNAMIC_DATA pData);
 
 VOID     MmsTestAllocateMemory();
+VOID     MmsScannerThread(IN PVOID StartContext);
 //---------------------------------------------------------------------------------------------------------
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 {
-    NTSTATUS Status = STATUS_SUCCESS;
+    NTSTATUS Status       = STATUS_SUCCESS;
+    HANDLE   ThreadHandle = NULL;
 
     UNREFERENCED_PARAMETER(RegistryPath);
 
@@ -61,11 +65,38 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
         return Status;
     }
 
-    MmsTestAllocateMemory();
- 
+    g_DriverObject = DriverObject;
+
     DriverObject->DriverUnload = DriverUnload;
+    
+    MmsTestAllocateMemory();
+
+    PsCreateSystemThread(&ThreadHandle,
+        0,
+        NULL,
+        NtCurrentProcess(),
+        NULL,
+        MmsScannerThread,
+        NULL);
+
+    if (ThreadHandle)
+    {
+        ZwClose(ThreadHandle);
+    }
 
     return STATUS_SUCCESS;
+}
+//---------------------------------------------------------------------------------------------------------
+VOID MmsScannerThread(IN PVOID StartContext)
+{
+    LARGE_INTEGER liDelayTime = { 0 };
+
+    liDelayTime.QuadPart = -1000 * 10000;
+    KeDelayExecutionThread(KernelMode, FALSE, &liDelayTime);
+
+    ScanDriver();
+
+    PsTerminateSystemThread(STATUS_SUCCESS);
 }
 //---------------------------------------------------------------------------------------------------------
 VOID DriverUnload(PDRIVER_OBJECT DriverObject)

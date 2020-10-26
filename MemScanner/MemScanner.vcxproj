@@ -141,11 +141,13 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DriverScanner.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="Private.c" />
     <ClCompile Include="Utils.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DriverScanner.h" />
     <ClInclude Include="Import.h" />
     <ClInclude Include="Private.h" />
     <ClInclude Include="Utils.h" />
