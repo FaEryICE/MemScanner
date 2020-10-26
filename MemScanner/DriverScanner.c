@@ -211,7 +211,7 @@ VOID ScanDriver()
 
     ScanDriverByLdrDataTableEntryMemory();
 
-    // ÄÚ´æÉ¨Ãè
+    // å†…å­˜æ‰«æ
     // 1. For BigPool which allocated By ExAllocatePoolWithTag
     ScanDriverByBigPoolSuspiciousPE();
 

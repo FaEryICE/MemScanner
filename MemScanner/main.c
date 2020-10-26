@@ -1,4 +1,4 @@
-#include "NativeStruct.h"
+ï»¿#include "NativeStruct.h"
 #include "Private.h"
 #include "Import.h"
 #include "Utils.h"
@@ -380,7 +380,7 @@ NTSTATUS MmsInitMemoryLayoutForWin7AndWin8(IN OUT PDYNAMIC_DATA pData)
         return STATUS_UNSUCCESSFUL;
     }
 
-    // ¿ÉÀ©Õ¹ÇøÓò
+    // å¯æ‰©å±•åŒºåŸŸ
     pData->MmNonpagedPoolStart = *(PVOID*)g_KdDebuggerDataBlock->MmNonPagedPoolStart;
     pData->MmNonpagedPoolEnd   = (PVOID)((PUCHAR)pData->MmNonpagedPoolStart + *(PULONG_PTR)g_KdDebuggerDataBlock->MmMaximumNonPagedPoolInBytes - 1);
 
@@ -446,7 +446,7 @@ NTSTATUS MmsInitMemoryLayoutForWin8_1ToWin10TH2(IN OUT PDYNAMIC_DATA pData)
     pData->MmSystemPtesEnd   = (PVOID)0xFFFFDFFFFFFFFFFF;
 
     pData->MmNonpagedPoolStart = (PVOID)0xFFFFE00000000000;
-    pData->MmNonpagedPoolEnd   = (PVOID)0xFFFFF00000000000;//µÈ·Ö³ÉKeNumberNodes¿é
+    pData->MmNonpagedPoolEnd   = (PVOID)0xFFFFF00000000000;//ç­‰åˆ†æˆKeNumberNodeså—
 
     pData->MmDriverImageStart = (PVOID)0xFFFFF80000000000;
     pData->MmDriverImageEnd   = (PVOID)0xFFFFF87FFFFFFFFF;
@@ -518,7 +518,7 @@ NTSTATUS MmsInitMemoryLayoutForWin10RS1AndLater(IN OUT PDYNAMIC_DATA pData)
     pData->MmSystemPtesEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[AssignedRegionSystemPtes].BaseAddress + lpMiSystemVaAssignment[AssignedRegionSystemPtes].NumberOfBytes - 1);
 
     pData->MmNonpagedPoolStart = (PVOID)lpMiSystemVaAssignment[AssignedRegionNonPagedPool].BaseAddress;
-    pData->MmNonpagedPoolEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[AssignedRegionNonPagedPool].BaseAddress + lpMiSystemVaAssignment[AssignedRegionNonPagedPool].NumberOfBytes - 1);//µÈ·Ö³ÉKeNumberNodes¿é
+    pData->MmNonpagedPoolEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[AssignedRegionNonPagedPool].BaseAddress + lpMiSystemVaAssignment[AssignedRegionNonPagedPool].NumberOfBytes - 1);//ç­‰åˆ†æˆKeNumberNodeså—
 
     if (pData->ver == WINVER_10_RS1)
     {
@@ -710,7 +710,7 @@ VOID MmsTestAllocateContiguousMemory()
     PHYSICAL_ADDRESS HighestAcceptAddress = {0};
     HighestAcceptAddress.QuadPart = 1000000000;
 
-    // ÉêÇëÁ¬ĞøµÄ²»¿É·ÖÒ³ÎïÀíÄÚ´æ¿Õ¼ä ²¢Ó³Éäµ½ÏµÍ³¿Õ¼ä
+    // ç”³è¯·è¿ç»­çš„ä¸å¯åˆ†é¡µç‰©ç†å†…å­˜ç©ºé—´ å¹¶æ˜ å°„åˆ°ç³»ç»Ÿç©ºé—´
     lpVirtualAddr = MmAllocateContiguousMemory(PAGE_SIZE * 10, HighestAcceptAddress);
     if (lpVirtualAddr)
     {

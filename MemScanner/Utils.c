@@ -122,7 +122,7 @@ BOOLEAN MmsIsRealDriverObject(PDRIVER_OBJECT DriverObject)
         }
     }
 
-    // ObGetObjectType会访问到Object之前的内存空间，如果对象头内存与对象体内存不在一个页面，需要确保对象头所在页面也是有效的，正常情况绝不会不在同一个页面下
+    // ObGetObjectType浼氳闂埌Object涔嬪墠鐨勫唴瀛樼┖闂达紝濡傛灉瀵硅薄澶村唴瀛樹笌瀵硅薄浣撳唴瀛樹笉鍦ㄤ竴涓〉闈紝闇�瑕佺‘淇濆璞″ご鎵�鍦ㄩ〉闈篃鏄湁鏁堢殑锛屾甯告儏鍐电粷涓嶄細涓嶅湪鍚屼竴涓〉闈笅
     if (MmsGetObjectType(DriverObject) != *IoDriverObjectType)
     {
         return FALSE;
