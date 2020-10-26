@@ -492,31 +492,43 @@ NTSTATUS MmsInitMemoryLayoutForWin10RS1AndLater(IN OUT PDYNAMIC_DATA pData)
     if (pData->ver == WINVER_10_RS1)
     {
         pData->MmDriverImageStart = (PVOID)lpMiSystemVaAssignment[13].BaseAddress;
-        pData->MmDriverImageEnd = (PVOID)((PUCHAR)lpMiSystemVaAssignment[13].BaseAddress + lpMiSystemVaAssignment[13].NumberOfBytes - 1);
+        pData->MmDriverImageEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[13].BaseAddress + lpMiSystemVaAssignment[13].NumberOfBytes - 1);
+
+        pData->MmSessionSpaceStart = (PVOID)lpMiSystemVaAssignment[10].BaseAddress;
+        pData->MmSessionSpaceEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[10].BaseAddress + lpMiSystemVaAssignment[10].NumberOfBytes - 1);
     }
     else if (pData->ver == WINVER_10_RS2)
     {
         pData->MmDriverImageStart = (PVOID)lpMiSystemVaAssignment[12].BaseAddress;
-        pData->MmDriverImageEnd = (PVOID)((PUCHAR)lpMiSystemVaAssignment[12].BaseAddress + lpMiSystemVaAssignment[12].NumberOfBytes - 1);
+        pData->MmDriverImageEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[12].BaseAddress + lpMiSystemVaAssignment[12].NumberOfBytes - 1);
+
+        pData->MmSessionSpaceStart = (PVOID)lpMiSystemVaAssignment[11].BaseAddress;
+        pData->MmSessionSpaceEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[11].BaseAddress + lpMiSystemVaAssignment[11].NumberOfBytes - 1);
     }
-    if (pData->ver >= WINVER_10_RS3 && pData->ver <= WINVER_10_RS5)
+    else if (pData->ver >= WINVER_10_RS3 && pData->ver <= WINVER_10_RS5)
     {
         pData->MmDriverImageStart = (PVOID)lpMiSystemVaAssignment[13].BaseAddress;
-        pData->MmDriverImageEnd = (PVOID)((PUCHAR)lpMiSystemVaAssignment[13].BaseAddress + lpMiSystemVaAssignment[13].NumberOfBytes - 1);
+        pData->MmDriverImageEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[13].BaseAddress + lpMiSystemVaAssignment[13].NumberOfBytes - 1);
+
+        pData->MmSessionSpaceStart = (PVOID)lpMiSystemVaAssignment[12].BaseAddress;
+        pData->MmSessionSpaceEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[12].BaseAddress + lpMiSystemVaAssignment[12].NumberOfBytes - 1);
     }
-    if (pData->ver == WINVER_10_19H1 || pData->ver == WINVER_10_19H2)
+    else if (pData->ver == WINVER_10_19H1 || pData->ver == WINVER_10_19H2)
     {
         pData->MmDriverImageStart = (PVOID)lpMiSystemVaAssignment[11].BaseAddress;
-        pData->MmDriverImageEnd = (PVOID)((PUCHAR)lpMiSystemVaAssignment[11].BaseAddress + lpMiSystemVaAssignment[11].NumberOfBytes - 1);
+        pData->MmDriverImageEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[11].BaseAddress + lpMiSystemVaAssignment[11].NumberOfBytes - 1);
+
+        pData->MmSessionSpaceStart = (PVOID)lpMiSystemVaAssignment[10].BaseAddress;
+        pData->MmSessionSpaceEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[10].BaseAddress + lpMiSystemVaAssignment[10].NumberOfBytes - 1);
     }
     else if (pData->ver >= WINVER_10_20H1)
     {
         pData->MmDriverImageStart = (PVOID)lpMiSystemVaAssignment[AssignedRegionSystemImages].BaseAddress;
-        pData->MmDriverImageEnd = (PVOID)((PUCHAR)lpMiSystemVaAssignment[AssignedRegionSystemImages].BaseAddress + lpMiSystemVaAssignment[AssignedRegionSystemImages].NumberOfBytes - 1);
-    }
+        pData->MmDriverImageEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[AssignedRegionSystemImages].BaseAddress + lpMiSystemVaAssignment[AssignedRegionSystemImages].NumberOfBytes - 1);
 
-    //pData->MmSessionSpaceStart = (PVOID)lpMiSystemVaAssignment[AssignedRegionSession].BaseAddress;
-    //pData->MmSessionSpaceEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[AssignedRegionSession].BaseAddress + lpMiSystemVaAssignment[AssignedRegionSession].NumberOfBytes - 1);
+        pData->MmSessionSpaceStart = (PVOID)lpMiSystemVaAssignment[10].BaseAddress;
+        pData->MmSessionSpaceEnd   = (PVOID)((PUCHAR)lpMiSystemVaAssignment[10].BaseAddress + lpMiSystemVaAssignment[10].NumberOfBytes - 1);
+    }
 
     pData->MmDynamicVASpaceStart = (PVOID)NULL;
     pData->MmDynamicVASpaceEnd   = (PVOID)NULL;
