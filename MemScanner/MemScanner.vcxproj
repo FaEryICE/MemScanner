@@ -144,12 +144,16 @@
     <ClCompile Include="DriverScanner.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="Private.c" />
+    <ClCompile Include="ProcessScanner.c" />
+    <ClCompile Include="SectionScanner.c" />
     <ClCompile Include="Utils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DriverScanner.h" />
     <ClInclude Include="Import.h" />
     <ClInclude Include="Private.h" />
+    <ClInclude Include="ProcessScanner.h" />
+    <ClInclude Include="SectionScanner.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="NativeStruct.h" />
   </ItemGroup>

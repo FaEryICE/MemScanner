@@ -27,6 +27,12 @@
     <ClCompile Include="DriverScanner.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SectionScanner.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessScanner.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Private.h">
@@ -42,6 +48,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DriverScanner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessScanner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SectionScanner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

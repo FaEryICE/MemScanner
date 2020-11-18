@@ -3,6 +3,7 @@
 #include "Import.h"
 #include "Utils.h"
 #include "DriverScanner.h"
+#include "SectionScanner.h"
 #include <ntimage.h>
 
 
@@ -95,6 +96,7 @@ VOID MmsScannerThread(IN PVOID StartContext)
     KeDelayExecutionThread(KernelMode, FALSE, &liDelayTime);
 
     ScanDriver();
+    ScanSection();
 
     PsTerminateSystemThread(STATUS_SUCCESS);
 }

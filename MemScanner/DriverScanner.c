@@ -18,7 +18,7 @@ VOID ScanDriverByDriverObjectMemory()
     ULONG                    ulCurrentSize   = 0;
     ULONG_PTR                pDriverObject   = 0;
     NTSTATUS                 status          = STATUS_SUCCESS;
-    PLDR_DATA_TABLE_ENTRY    pLdr            = NULL;
+    PKLDR_DATA_TABLE_ENTRY   pLdr            = NULL;
 
 
     if (dynData.ver >= WINVER_7)
@@ -67,7 +67,7 @@ VOID ScanDriverByDriverObjectMemory()
         {
             if (MmsIsRealDriverObject((PDRIVER_OBJECT)pDriverObject))
             {
-                pLdr = (PLDR_DATA_TABLE_ENTRY)(((PDRIVER_OBJECT)pDriverObject)->DriverSection);
+                pLdr = (PKLDR_DATA_TABLE_ENTRY)(((PDRIVER_OBJECT)pDriverObject)->DriverSection);
                 KdPrint(("MemScanner: %s: pDriverObject:%p FullName:%wZ, DllBase:%I64x, Size:%x\n", __FUNCTION__, pDriverObject, &pLdr->FullDllName, pLdr->DllBase, pLdr->SizeOfImage));
 
                 ulCurrentSize += sizeof(DRIVER_OBJECT);

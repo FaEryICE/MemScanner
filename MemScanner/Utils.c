@@ -12,6 +12,7 @@ pfnObGetObjectType g_ObGetObjectType = NULL;
 
 extern POBJECT_TYPE* IoDriverObjectType;
 extern POBJECT_TYPE* IoDeviceObjectType;
+extern POBJECT_TYPE* MmSectionObjectType;
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 NTSTATUS MmsSearchPattern(IN PCUCHAR pattern, IN UCHAR wildcard, IN ULONG_PTR len, IN const VOID* base, IN ULONG_PTR size, OUT PVOID* ppFound)
 {
@@ -59,6 +60,37 @@ POBJECT_TYPE MmsGetObjectType(PVOID pObject)
     }
 
     return NULL;
+}
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ULONG MmsGetObjectName(PVOID Object, char* szBuffer, ULONG ulBufferSize)
+{
+    ULONG                   ulRetLen        = 0;
+    ULONG                   ulRet           = 0;
+    PUNICODE_STRING         lpUniObjectName = NULL;
+
+    lpUniObjectName = (PUNICODE_STRING)ExAllocatePoolWithTag(NonPagedPool, 1024 + 2 * sizeof(OBJECT_NAME_INFORMATION), 'nOmM');
+    if (!lpUniObjectName)
+    {
+        return 0;
+    }
+
+    memset(lpUniObjectName, 0, 1024 + 2 * sizeof(OBJECT_NAME_INFORMATION));
+    lpUniObjectName->MaximumLength = 1024;
+
+    if (NT_SUCCESS(ObQueryNameString(Object, (POBJECT_NAME_INFORMATION)lpUniObjectName, 1024, &ulRetLen)))
+    {
+        ULONG i, Len = lpUniObjectName->Length / 2;
+        for (i = 0; i + 8 < Len && i + 1 < ulBufferSize; i++)
+        {
+            szBuffer[i] = (char)lpUniObjectName->Buffer[i + 8];
+        }
+
+        szBuffer[i++] = 0;
+        ulRet = i;
+    }
+
+    ExFreePool(lpUniObjectName);
+    return ulRet;
 }
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 BOOLEAN MmsIsAddressValidLength(PVOID lpBuffer, ULONG Len)
@@ -168,5 +200,71 @@ BOOLEAN MmsIsValidUnicodeString(PUNICODE_STRING lpuniStr)
     }
 
     return TRUE;
+}
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BOOLEAN MmsIsRealSectionObject(PSECTION SectionObject)
+{
+    BOOLEAN bRet = FALSE;
+
+    if (MmsIsAddressValidLength((PVOID)((ULONG_PTR)SectionObject - sizeof(OBJECT_HEADER)), sizeof(OBJECT_HEADER) + sizeof(SECTION)) &&
+        MmsGetObjectType(SectionObject) == *MmSectionObjectType &&
+        SectionObject->SizeOfSection < (ULONG_PTR)MmSystemRangeStart &&
+        !SectionObject->u.Flags.BeingDeleted &&
+        !SectionObject->u.Flags.BeingCreated)
+    {
+        PCONTROL_AREA ControlArea = (PCONTROL_AREA)((ULONG_PTR)SectionObject->u1.ControlArea & ~3);
+        if ((ULONG_PTR)ControlArea > (ULONG_PTR)MmSystemRangeStart &&
+            MmsIsAddressValidLength(ControlArea, sizeof(CONTROL_AREA)))
+        {
+            return TRUE;
+        }
+    }
+
+    return bRet;
+}
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BOOLEAN MmsIsRealFileObject(PFILE_OBJECT FileObject)
+{
+    BOOLEAN bRet = FALSE;
+
+    if (MmsIsAddressValidLength((PVOID)((ULONG_PTR)FileObject - sizeof(OBJECT_HEADER)), sizeof(OBJECT_HEADER) + sizeof(FILE_OBJECT)) &&
+        MmsGetObjectType(FileObject) == *IoFileObjectType &&
+        FileObject->Type == 5 &&
+        FileObject->Size == sizeof(FILE_OBJECT) &&
+        (ULONG_PTR)FileObject->DeviceObject > (ULONG_PTR)MmSystemRangeStart &&
+        (ULONG_PTR)FileObject->SectionObjectPointer > (ULONG_PTR)MmSystemRangeStart)
+    {
+        if ((ULONG_PTR)FileObject->DeviceObject)
+        {
+            if ((ULONG_PTR)FileObject->DeviceObject > (ULONG_PTR)MmSystemRangeStart &&
+                MmsIsAddressValidLength((PVOID)((ULONG_PTR)FileObject->DeviceObject - sizeof(OBJECT_HEADER)), sizeof(OBJECT_HEADER) + sizeof(DEVICE_OBJECT)) &&
+                MmsGetObjectType(FileObject->DeviceObject) == *IoDeviceObjectType)
+            {
+                bRet = TRUE;
+            }
+            else
+            {
+                bRet = FALSE;
+            }
+        }
+
+        if ((ULONG_PTR)FileObject->Vpb)
+        {
+            if ((ULONG_PTR)FileObject->Vpb > (ULONG_PTR)MmSystemRangeStart &&
+                MmsIsAddressValidLength(FileObject->Vpb, sizeof(VPB)) &&
+                (ULONG_PTR)FileObject->Vpb->DeviceObject > (ULONG_PTR)MmSystemRangeStart &&
+                MmsIsAddressValidLength((PVOID)((ULONG_PTR)FileObject->Vpb->DeviceObject - sizeof(OBJECT_HEADER)), sizeof(OBJECT_HEADER) + sizeof(DEVICE_OBJECT)) &&
+                MmsGetObjectType(FileObject->Vpb->DeviceObject) == *IoDeviceObjectType)
+            {
+                bRet = TRUE;
+            }
+            else
+            {
+                bRet = FALSE;
+            }
+        }
+    }
+
+    return bRet;
 }
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -288,6 +288,38 @@ typedef struct _LDR_DATA_TABLE_ENTRY32 {
 
 } LDR_DATA_TABLE_ENTRY32, * PLDR_DATA_TABLE_ENTRY32;
 
+typedef struct _KLDR_DATA_TABLE_ENTRY
+{
+    struct _LIST_ENTRY InLoadOrderLinks;                                    //0x0
+    VOID* ExceptionTable;                                                   //0x10
+    ULONG ExceptionTableSize;                                               //0x18
+    VOID* GpValue;                                                          //0x20
+    struct _NON_PAGED_DEBUG_INFO* NonPagedDebugInfo;                        //0x28
+    VOID* DllBase;                                                          //0x30
+    VOID* EntryPoint;                                                       //0x38
+    ULONG SizeOfImage;                                                      //0x40
+    struct _UNICODE_STRING FullDllName;                                     //0x48
+    struct _UNICODE_STRING BaseDllName;                                     //0x58
+    ULONG Flags;                                                            //0x68
+    USHORT LoadCount;                                                       //0x6c
+    union
+    {
+        USHORT SignatureLevel : 4;                                            //0x6e
+        USHORT SignatureType : 3;                                             //0x6e
+        USHORT Unused : 9;                                                    //0x6e
+        USHORT EntireField;                                                 //0x6e
+    } u1;                                                                   //0x6e
+    VOID* SectionPointer;                                                   //0x70
+    ULONG CheckSum;                                                         //0x78
+    ULONG CoverageSectionSize;                                              //0x7c
+    VOID* CoverageSection;                                                  //0x80
+    VOID* LoadedImports;                                                    //0x88
+    VOID* Spare;                                                            //0x90
+    ULONG SizeOfImageNotRounded;                                            //0x98
+    ULONG TimeDateStamp;                                                    //0x9c
+
+} KLDR_DATA_TABLE_ENTRY, * PKLDR_DATA_TABLE_ENTRY;
+
 typedef struct _POOL_HEADER {
     union {
         struct {
@@ -312,6 +344,83 @@ typedef struct _POOL_HEADER {
         };
     };
 } POOL_HEADER, * PPOOL_HEADER;
+
+struct _EX_PUSH_LOCK
+{
+    union
+    {
+        struct
+        {
+            ULONGLONG Locked : 1;                                             //0x0
+            ULONGLONG Waiting : 1;                                            //0x0
+            ULONGLONG Waking : 1;                                             //0x0
+            ULONGLONG MultipleShared : 1;                                     //0x0
+            ULONGLONG Shared : 60;                                            //0x0
+        };
+        ULONGLONG Value;                                                    //0x0
+        VOID* Ptr;                                                          //0x0
+    };
+};
+
+//0x40 bytes (sizeof)
+typedef struct _OBJECT_CREATE_INFORMATION
+{
+    ULONG Attributes;                                                       //0x0
+    VOID* RootDirectory;                                                    //0x8
+    CHAR ProbeMode;                                                         //0x10
+    ULONG PagedPoolCharge;                                                  //0x14
+    ULONG NonPagedPoolCharge;                                               //0x18
+    ULONG SecurityDescriptorCharge;                                         //0x1c
+    VOID* SecurityDescriptor;                                               //0x20
+    struct _SECURITY_QUALITY_OF_SERVICE* SecurityQos;                       //0x28
+    struct _SECURITY_QUALITY_OF_SERVICE SecurityQualityOfService;           //0x30
+} OBJECT_CREATE_INFORMATION, *POBJECT_CREATE_INFORMATION;
+
+
+typedef struct _OBJECT_HEADER
+{
+    LONGLONG PointerCount;                                                  //0x0
+    union
+    {
+        LONGLONG HandleCount;                                               //0x8
+        VOID* NextToFree;                                                   //0x8
+    };
+    struct _EX_PUSH_LOCK Lock;                                              //0x10
+    UCHAR TypeIndex;                                                        //0x18
+    union
+    {
+        UCHAR TraceFlags;                                                   //0x19
+        struct
+        {
+            UCHAR DbgRefTrace : 1;                                            //0x19
+            UCHAR DbgTracePermanent : 1;                                      //0x19
+        };
+    };
+    UCHAR InfoMask;                                                         //0x1a
+    union
+    {
+        UCHAR Flags;                                                        //0x1b
+        struct
+        {
+            UCHAR NewObject : 1;                                              //0x1b
+            UCHAR KernelObject : 1;                                           //0x1b
+            UCHAR KernelOnlyAccess : 1;                                       //0x1b
+            UCHAR ExclusiveObject : 1;                                        //0x1b
+            UCHAR PermanentObject : 1;                                        //0x1b
+            UCHAR DefaultSecurityQuota : 1;                                   //0x1b
+            UCHAR SingleHandleEntry : 1;                                      //0x1b
+            UCHAR DeletedInline : 1;                                          //0x1b
+        };
+    };
+    ULONG Reserved;                                                         //0x1c
+    union
+    {
+        struct _OBJECT_CREATE_INFORMATION* ObjectCreateInfo;                //0x20
+        VOID* QuotaBlockCharged;                                            //0x20
+    };
+    VOID* SecurityDescriptor;                                               //0x28
+    struct _QUAD Body;                                                      //0x30
+} OBJECT_HEADER, * POBJECT_HEADER;
 
 
 typedef struct _MMVIEW_WIN7 // 0x30
@@ -786,3 +895,342 @@ typedef struct _DUMP_HEADER
     CHAR VersionUser[32];
     struct _KDDEBUGGER_DATA64* KdDebuggerDataBlock;
 } DUMP_HEADER, * PDUMP_HEADER;
+
+//0x4 bytes (sizeof)
+struct _MMSECTION_FLAGS
+{
+    ULONG BeingDeleted : 1;                                                   //0x0
+    ULONG BeingCreated : 1;                                                   //0x0
+    ULONG BeingPurged : 1;                                                    //0x0
+    ULONG NoModifiedWriting : 1;                                              //0x0
+    ULONG FailAllIo : 1;                                                      //0x0
+    ULONG Image : 1;                                                          //0x0
+    ULONG Based : 1;                                                          //0x0
+    ULONG File : 1;                                                           //0x0
+    ULONG AttemptingDelete : 1;                                               //0x0
+    ULONG PrefetchCreated : 1;                                                //0x0
+    ULONG PhysicalMemory : 1;                                                 //0x0
+    ULONG ImageControlAreaOnRemovableMedia : 1;                               //0x0
+    ULONG Reserve : 1;                                                        //0x0
+    ULONG Commit : 1;                                                         //0x0
+    ULONG NoChange : 1;                                                       //0x0
+    ULONG WasPurged : 1;                                                      //0x0
+    ULONG UserReference : 1;                                                  //0x0
+    ULONG GlobalMemory : 1;                                                   //0x0
+    ULONG DeleteOnClose : 1;                                                  //0x0
+    ULONG FilePointerNull : 1;                                                //0x0
+    ULONG PreferredNode : 6;                                                  //0x0
+    ULONG GlobalOnlyPerSession : 1;                                           //0x0
+    ULONG UserWritable : 1;                                                   //0x0
+    ULONG SystemVaAllocated : 1;                                              //0x0
+    ULONG PreferredFsCompressionBoundary : 1;                                 //0x0
+    ULONG UsingFileExtents : 1;                                               //0x0
+    ULONG PageSize64K : 1;                                                    //0x0
+};
+
+struct _MMSECTION_FLAGS2
+{
+    USHORT PartitionId : 10;                                                  //0x0
+    UCHAR NoCrossPartitionAccess : 1;                                         //0x2
+    UCHAR SubsectionCrossPartitionReferenceOverflow : 1;                      //0x2
+};
+
+//0x8 bytes (sizeof)
+struct _EX_FAST_REF
+{
+    union
+    {
+        VOID* Object;                                                       //0x0
+        ULONGLONG RefCnt : 4;                                                 //0x0
+        ULONGLONG Value;                                                    //0x0
+    };
+};
+
+//0x28 bytes (sizeof)
+struct _MI_CONTROL_AREA_WAIT_BLOCK
+{
+    struct _MI_CONTROL_AREA_WAIT_BLOCK* Next;                               //0x0
+    ULONG WaitReason;                                                       //0x8
+    ULONG WaitResponse;                                                     //0xc
+    struct _KGATE Gate;                                                     //0x10
+};
+
+//0x4 bytes (sizeof)
+struct _SEGMENT_FLAGS
+{
+    union
+    {
+        struct
+        {
+            USHORT TotalNumberOfPtes4132 : 10;                                //0x0
+            USHORT Spare0 : 1;                                                //0x0
+            USHORT SessionDriverProtos : 1;                                   //0x0
+            USHORT LargePages : 1;                                            //0x0
+            USHORT DebugSymbolsLoaded : 1;                                    //0x0
+            USHORT WriteCombined : 1;                                         //0x0
+            USHORT NoCache : 1;                                               //0x0
+        };
+        USHORT Short0;                                                      //0x0
+    };
+    union
+    {
+        struct
+        {
+            UCHAR ImageCetShadowStacksReady : 1;                              //0x2
+            UCHAR DefaultProtectionMask : 5;                                  //0x2
+            UCHAR Binary32 : 1;                                               //0x2
+            UCHAR ContainsDebug : 1;                                          //0x2
+        };
+        UCHAR UChar1;                                                       //0x2
+    };
+    union
+    {
+        struct
+        {
+            UCHAR ForceCollision : 1;                                         //0x3
+            UCHAR ImageSigningType : 3;                                       //0x3
+            UCHAR ImageSigningLevel : 4;                                      //0x3
+        };
+        UCHAR UChar2;                                                       //0x3
+    };
+};
+
+//0x10 bytes (sizeof)
+typedef struct _MMEXTEND_INFO
+{
+    ULONGLONG CommittedSize;                                                //0x0
+    ULONG ReferenceCount;                                                   //0x8
+} MMEXTEND_INFO, *PMMEXTEND_INFO;
+
+//0x40 bytes (sizeof)
+typedef struct _SECTION_IMAGE_INFORMATION
+{
+    VOID* TransferAddress;                                                  //0x0
+    ULONG ZeroBits;                                                         //0x8
+    ULONGLONG MaximumStackSize;                                             //0x10
+    ULONGLONG CommittedStackSize;                                           //0x18
+    ULONG SubSystemType;                                                    //0x20
+    union
+    {
+        struct
+        {
+            USHORT SubSystemMinorVersion;                                   //0x24
+            USHORT SubSystemMajorVersion;                                   //0x26
+        };
+        ULONG SubSystemVersion;                                             //0x24
+    };
+    union
+    {
+        struct
+        {
+            USHORT MajorOperatingSystemVersion;                             //0x28
+            USHORT MinorOperatingSystemVersion;                             //0x2a
+        };
+        ULONG OperatingSystemVersion;                                       //0x28
+    };
+    USHORT ImageCharacteristics;                                            //0x2c
+    USHORT DllCharacteristics;                                              //0x2e
+    USHORT Machine;                                                         //0x30
+    UCHAR ImageContainsCode;                                                //0x32
+    union
+    {
+        UCHAR ImageFlags;                                                   //0x33
+        struct
+        {
+            UCHAR ComPlusNativeReady : 1;                                     //0x33
+            UCHAR ComPlusILOnly : 1;                                          //0x33
+            UCHAR ImageDynamicallyRelocated : 1;                              //0x33
+            UCHAR ImageMappedFlat : 1;                                        //0x33
+            UCHAR BaseBelow4gb : 1;                                           //0x33
+            UCHAR ComPlusPrefer32bit : 1;                                     //0x33
+            UCHAR Reserved : 2;                                               //0x33
+        };
+    };
+    ULONG LoaderFlags;                                                      //0x34
+    ULONG ImageFileSize;                                                    //0x38
+    ULONG CheckSum;                                                         //0x3c
+} SECTION_IMAGE_INFORMATION, *PSECTION_IMAGE_INFORMATION;
+
+//0xc bytes (sizeof)
+typedef struct _MI_EXTRA_IMAGE_INFORMATION
+{
+    ULONG SizeOfHeaders;                                                    //0x0
+    ULONG SizeOfImage;                                                      //0x4
+    ULONG TimeDateStamp;                                                    //0x8
+} MI_EXTRA_IMAGE_INFORMATION, *PMI_EXTRA_IMAGE_INFORMATION;
+
+//0x50 bytes (sizeof)
+typedef struct _MI_SECTION_IMAGE_INFORMATION
+{
+    struct _SECTION_IMAGE_INFORMATION ExportedImageInformation;             //0x0
+    struct _MI_EXTRA_IMAGE_INFORMATION InternalImageInformation;            //0x40
+} MI_SECTION_IMAGE_INFORMATION, *PMI_SECTION_IMAGE_INFORMATION;
+
+//0x48 bytes (sizeof)
+typedef struct _SEGMENT
+{
+    struct _CONTROL_AREA* ControlArea;                                      //0x0
+    ULONG TotalNumberOfPtes;                                                //0x8
+    struct _SEGMENT_FLAGS SegmentFlags;                                     //0xc
+    ULONGLONG NumberOfCommittedPages;                                       //0x10
+    ULONGLONG SizeOfSegment;                                                //0x18
+    union
+    {
+        struct _MMEXTEND_INFO* ExtendInfo;                                  //0x20
+        VOID* BasedAddress;                                                 //0x20
+    };
+    struct _EX_PUSH_LOCK SegmentLock;                                       //0x28
+    union
+    {
+        ULONGLONG ImageCommitment;                                          //0x30
+        ULONG CreatingProcessId;                                            //0x30
+    } u1;                                                                   //0x30
+    union
+    {
+        struct _MI_SECTION_IMAGE_INFORMATION* ImageInformation;             //0x38
+        VOID* FirstMappedVa;                                                //0x38
+    } u2;                                                                   //0x38
+    struct _MMPTE* PrototypePte;                                            //0x40
+} SEGMENT, *PSEGMENT;
+
+//0x20 bytes (sizeof)
+typedef struct _MI_PROTOTYPE_PTES_NODE
+{
+    struct _RTL_BALANCED_NODE Node;                                         //0x0
+    union
+    {
+        struct
+        {
+            ULONGLONG AllocationType : 3;                                     //0x18
+            ULONGLONG Inserted : 1;                                           //0x18
+        } e1;                                                               //0x18
+        struct
+        {
+            ULONGLONG PrototypePtesFlags;                                   //0x18
+        } e2;                                                               //0x18
+    } u1;                                                                   //0x18
+} MI_PROTOTYPE_PTES_NODE, *PMI_PROTOTYPE_PTES_NODE;
+
+//0x8 bytes (sizeof)
+typedef struct _IMAGE_SECURITY_CONTEXT
+{
+    union
+    {
+        VOID* PageHashes;                                                   //0x0
+        ULONGLONG Value;                                                    //0x0
+        struct
+        {
+            ULONGLONG SecurityBeingCreated : 2;                               //0x0
+            ULONGLONG SecurityMandatory : 1;                                  //0x0
+            ULONGLONG PageHashPointer : 61;                                   //0x0
+        };
+    };
+} IMAGE_SECURITY_CONTEXT, *PIMAGE_SECURITY_CONTEXT;
+
+//0x40 bytes (sizeof)
+typedef struct _MI_IMAGE_SECURITY_REFERENCE
+{
+    struct _MI_PROTOTYPE_PTES_NODE ProtosNode;                              //0x0
+    VOID* DynamicRelocations;                                               //0x20
+    struct _IMAGE_SECURITY_CONTEXT SecurityContext;                         //0x28
+    union
+    {
+        VOID* ImageFileExtents;                                             //0x30
+        ULONGLONG ImageFileExtentsUlongPtr;                                 //0x30
+        ULONGLONG FilesystemWantsRva : 1;                                     //0x30
+        ULONGLONG Spare : 3;                                                  //0x30
+    } u1;                                                                   //0x30
+    ULONGLONG StrongImageReference;                                         //0x38
+} MI_IMAGE_SECURITY_REFERENCE, *PMI_IMAGE_SECURITY_REFERENCE;
+
+typedef struct _CONTROL_AREA
+{
+    struct _SEGMENT* Segment;                                               //0x0
+    union
+    {
+        struct _LIST_ENTRY ListHead;                                        //0x8
+        VOID* AweContext;                                                   //0x8
+    };
+    ULONGLONG NumberOfSectionReferences;                                    //0x18
+    ULONGLONG NumberOfPfnReferences;                                        //0x20
+    ULONGLONG NumberOfMappedViews;                                          //0x28
+    ULONGLONG NumberOfUserReferences;                                       //0x30
+    union
+    {
+        ULONG LongFlags;                                                    //0x38
+        struct _MMSECTION_FLAGS Flags;                                      //0x38
+    } u;                                                                    //0x38
+    union
+    {
+        ULONG LongFlags;                                                    //0x3c
+        struct _MMSECTION_FLAGS2 Flags;                                     //0x3c
+    } u1;                                                                   //0x3c
+    struct _EX_FAST_REF FilePointer;                                        //0x40
+    volatile LONG ControlAreaLock;                                          //0x48
+    ULONG ModifiedWriteCount;                                               //0x4c
+    struct _MI_CONTROL_AREA_WAIT_BLOCK* WaitList;                           //0x50
+    union
+    {
+        struct
+        {
+            union
+            {
+                ULONG NumberOfSystemCacheViews;                             //0x58
+                ULONG ImageRelocationStartBit;                              //0x58
+            };
+            union
+            {
+                volatile LONG WritableUserReferences;                       //0x5c
+                struct
+                {
+                    ULONG ImageRelocationSizeIn64k : 16;                      //0x5c
+                    ULONG SystemImage : 1;                                    //0x5c
+                    ULONG CantMove : 1;                                       //0x5c
+                    ULONG StrongCode : 2;                                     //0x5c
+                    ULONG BitMap : 2;                                         //0x5c
+                    ULONG ImageActive : 1;                                    //0x5c
+                    ULONG ImageBaseOkToReuse : 1;                             //0x5c
+                };
+            };
+            union
+            {
+                ULONG FlushInProgressCount;                                 //0x60
+                ULONG NumberOfSubsections;                                  //0x60
+                struct _MI_IMAGE_SECURITY_REFERENCE* SeImageStub;           //0x60
+            };
+        } e2;                                                               //0x58
+    } u2;                                                                   //0x58
+    struct _EX_PUSH_LOCK FileObjectLock;                                    //0x68
+    volatile ULONGLONG LockedPages;                                         //0x70
+    union
+    {
+        ULONGLONG IoAttributionContext : 61;                                  //0x78
+        ULONGLONG Spare : 3;                                                  //0x78
+        ULONGLONG ImageCrossPartitionCharge;                                //0x78
+        ULONGLONG CommittedPageCount : 36;                                    //0x78
+    } u3;                                                                   //0x78
+} CONTROL_AREA, * PCONTROL_AREA;
+
+typedef struct _SECTION
+{
+    struct _RTL_BALANCED_NODE SectionNode;                                  //0x0
+    ULONGLONG StartingVpn;                                                  //0x18
+    ULONGLONG EndingVpn;                                                    //0x20
+    union
+    {
+        struct _CONTROL_AREA* ControlArea;                                  //0x28
+        struct _FILE_OBJECT* FileObject;                                    //0x28
+        ULONGLONG RemoteImageFileObject : 1;                                  //0x28
+        ULONGLONG RemoteDataFileObject : 1;                                   //0x28
+    } u1;                                                                   //0x28
+    ULONGLONG SizeOfSection;                                                //0x30
+    union
+    {
+        ULONG LongFlags;                                                    //0x38
+        struct _MMSECTION_FLAGS Flags;                                      //0x38
+    } u;                                                                    //0x38
+    ULONG InitialPageProtection : 12;                                         //0x3c
+    ULONG SessionId : 19;                                                     //0x3c
+    ULONG NoValidationNeeded : 1;                                             //0x3c
+
+} SECTION, * PSECTION;
