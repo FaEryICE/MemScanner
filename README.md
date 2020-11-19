@@ -14,4 +14,4 @@ Support Windows 7 ~ Windows 10 20H1 x64, and Not support x86 Platform
 ***
 
 # Conclusion
-- Win7 DriverObject is not associated with FileObject, within the procedure of MmLoadSystemImage, the SectionObject created and deleted at the end; but in Win10 the life cycle of SectionObject is same to DriverObject.  
+- In Win7 DriverObject is not associated with FileObject, within the procedure of MmLoadSystemImage the SectionObject created and deleted immediately at the end; but in Win10 the life cycle of SectionObject is same to DriverObject.  
