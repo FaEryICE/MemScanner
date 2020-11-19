@@ -8,8 +8,10 @@
 
 
 
+KEVENT           g_ScannerFinishEvent;
+
 // OS Dependant data
-DYNAMIC_DATA     dynData        = { 0 };
+DYNAMIC_DATA     g_dynData        = { 0 };
 PDRIVER_OBJECT   g_DriverObject = NULL;
 
 CHAR* g_szAssignedRegionNames[] = {
@@ -54,7 +56,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
     UNREFERENCED_PARAMETER(RegistryPath);
 
     InitializeDebuggerBlock();
-    Status = MmsInitDynamicData(&dynData);
+    Status = MmsInitDynamicData(&g_dynData);
     if (!NT_SUCCESS(Status))
     {
         return Status;
@@ -72,6 +74,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
     
     MmsTestAllocateMemory();
 
+    KeInitializeEvent(&g_ScannerFinishEvent, NotificationEvent, FALSE);
     PsCreateSystemThread(&ThreadHandle,
         0,
         NULL,
@@ -98,12 +101,21 @@ VOID MmsScannerThread(IN PVOID StartContext)
     ScanDriver();
     ScanSection();
 
+    KeSetEvent(&g_ScannerFinishEvent, IO_NO_INCREMENT, FALSE);
+
     PsTerminateSystemThread(STATUS_SUCCESS);
 }
 //---------------------------------------------------------------------------------------------------------
 VOID DriverUnload(PDRIVER_OBJECT DriverObject)
 {
     UNREFERENCED_PARAMETER(DriverObject);
+
+    DbgPrint("[%s] Unloading\n", __FUNCTION__);
+
+    KeWaitForSingleObject(&g_ScannerFinishEvent, Executive, KernelMode, FALSE, NULL);
+
+    DbgPrint("[%s] Unload Complete\n", __FUNCTION__);
+
     return;
 }
 //---------------------------------------------------------------------------------------------------------
@@ -206,7 +218,7 @@ NTSTATUS MmsGetBuildNO(OUT PULONG pBuildNo)
         ZwClose(hKey);
     }
     else
-        DbgPrint("MemScanner: %s: ZwOpenKey failed with status 0x%X\n", __FUNCTION__, status);
+        DbgPrint("[%s] ZwOpenKey failed with status 0x%X\n", __FUNCTION__, status);
 
     return status;
 }
@@ -240,7 +252,8 @@ NTSTATUS MmsInitDynamicData(IN OUT PDYNAMIC_DATA pData)
     status = MmsGetBuildNO(&pData->buildNo);
 
     DbgPrint(
-        "MemScanner: OS version %d.%d.%d.%d.%d - 0x%x\n",
+        "[%s] OS version %d.%d.%d.%d.%d - 0x%x\n",
+        __FUNCTION__,
         verInfo.dwMajorVersion,
         verInfo.dwMinorVersion,
         verInfo.dwBuildNumber,
@@ -333,31 +346,22 @@ NTSTATUS MmsInitDynamicData(IN OUT PDYNAMIC_DATA pData)
     {
         status = MmsInitMemoryLayoutForWin10RS1AndLater(pData);
 
-        DbgPrint(
-            "MemScanner: %s: g_KdBlock->KernBase: %p, GetKernelBase() = 0x%p \n",
-            __FUNCTION__, g_KdBlock.KernBase, GetKernelBase(NULL));
+        DbgPrint("[%s] g_KdBlock->KernBase: %p, GetKernelBase() = 0x%p\n", __FUNCTION__, g_KdBlock.KernBase, GetKernelBase(NULL));
 
         ULONGLONG mask = (1ll << (PHYSICAL_ADDRESS_BITS - 1)) - 1;
-        dynData.DYN_PTE_BASE = (PVOID)g_KdBlock.PteBase;
-        dynData.DYN_PDE_BASE = (PVOID)((g_KdBlock.PteBase & ~mask) | ((g_KdBlock.PteBase >> 9) & mask));
+        g_dynData.DYN_PTE_BASE = (PVOID)g_KdBlock.PteBase;
+        g_dynData.DYN_PDE_BASE = (PVOID)((g_KdBlock.PteBase & ~mask) | ((g_KdBlock.PteBase >> 9) & mask));
     }
 
-    DbgPrint("MemScanner: %s: MmPagedPoolStart: 0x%p, MmPagedPoolEnd = 0x%p \n",
-        __FUNCTION__, pData->MmPagedPoolStart, pData->MmPagedPoolEnd);
+    DbgPrint("[%s] MmPagedPoolStart: 0x%p, MmPagedPoolEnd = 0x%p \n",       __FUNCTION__, pData->MmPagedPoolStart, pData->MmPagedPoolEnd);
+    DbgPrint("[%s] MmNonpagedPoolStart: 0x%p, MmNonpagedPoolEnd = 0x%p \n", __FUNCTION__, pData->MmNonpagedPoolStart, pData->MmNonpagedPoolEnd);
+    DbgPrint("[%s] MmSystemPtesStart: 0x%p, MmSystemPtesEnd = 0x%p \n",     __FUNCTION__, pData->MmSystemPtesStart, pData->MmSystemPtesEnd);
+    DbgPrint("[%s] MmDriverImageStart: 0x%p, MmDriverImageEnd = 0x%p \n",   __FUNCTION__, pData->MmDriverImageStart, pData->MmDriverImageEnd);
+    DbgPrint("[%s] PDE_BASE: %p, PTE_BASE: %p\n",                           __FUNCTION__, pData->DYN_PDE_BASE, pData->DYN_PTE_BASE);
 
-    DbgPrint("MemScanner: %s: MmNonpagedPoolStart: 0x%p, MmNonpagedPoolEnd = 0x%p \n",
-        __FUNCTION__, pData->MmNonpagedPoolStart, pData->MmNonpagedPoolEnd);
-
-    DbgPrint("MemScanner: %s: MmSystemPtesStart: 0x%p, MmSystemPtesEnd = 0x%p \n",
-        __FUNCTION__, pData->MmSystemPtesStart, pData->MmSystemPtesEnd);
-
-    DbgPrint("MemScanner: %s: MmDriverImageStart: 0x%p, MmDriverImageEnd = 0x%p \n",
-        __FUNCTION__, pData->MmDriverImageStart, pData->MmDriverImageEnd);
-
-    DbgPrint("MemScanner: PDE_BASE: %p, PTE_BASE: %p\n", pData->DYN_PDE_BASE, pData->DYN_PTE_BASE);
     if ((ULONG_PTR)pData->DYN_PDE_BASE < MI_SYSTEM_RANGE_START || (ULONG_PTR)pData->DYN_PTE_BASE < MI_SYSTEM_RANGE_START)
     {
-        DbgPrint("MemScanner: Invalid PDE/PTE base, aborting\n");
+        DbgPrint("[%s] Invalid PDE/PTE base, aborting\n", __FUNCTION__);
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -372,19 +376,14 @@ NTSTATUS MmsInitMemoryLayoutForWin7AndWin8(IN OUT PDYNAMIC_DATA pData)
         return STATUS_INVALID_ADDRESS;
     }
 
-    if (!g_KdDebuggerDataBlock)
-    {
-        return STATUS_DLL_INIT_FAILED;
-    }
-
-    if (!g_KdDebuggerDataBlock->MmNonPagedPoolStart || !g_KdDebuggerDataBlock->MmMaximumNonPagedPoolInBytes)
+    if (!g_KdBlock.MmNonPagedPoolStart || !g_KdBlock.MmMaximumNonPagedPoolInBytes)
     {
         return STATUS_UNSUCCESSFUL;
     }
 
     // 可扩展区域
-    pData->MmNonpagedPoolStart = *(PVOID*)g_KdDebuggerDataBlock->MmNonPagedPoolStart;
-    pData->MmNonpagedPoolEnd   = (PVOID)((PUCHAR)pData->MmNonpagedPoolStart + *(PULONG_PTR)g_KdDebuggerDataBlock->MmMaximumNonPagedPoolInBytes - 1);
+    pData->MmNonpagedPoolStart = *(PVOID*)g_KdBlock.MmNonPagedPoolStart;
+    pData->MmNonpagedPoolEnd   = (PVOID)((PUCHAR)pData->MmNonpagedPoolStart + *(PULONG_PTR)g_KdBlock.MmMaximumNonPagedPoolInBytes - 1);
 
     pData->MmPteSpaceStart   = (PVOID)0xFFFFF68000000000;
     pData->MmPteSpacecEnd    = (PVOID)0xFFFFF6FFFFFFFFFF;
@@ -484,14 +483,14 @@ NTSTATUS MmsInitMemoryLayoutForWin10RS1AndLater(IN OUT PDYNAMIC_DATA pData)
 
     if (!lpTargetAddr)
     {
-        DbgPrint("MemScanner: %s: MmsScanSection Failed\n", __FUNCTION__);
+        DbgPrint("[%s] MmsScanSection Failed\n", __FUNCTION__);
         return STATUS_NOT_FOUND;
     }
 
     lpMiSystemVaAssignment = (PMI_SYSTEM_VA_ASSIGNMENT)((PUCHAR)lpTargetAddr + *(PULONG)((PUCHAR)lpTargetAddr + 6) + 10);
     for (ulIndex = 0; ulIndex < AssignedRegionMaximum; ulIndex++)
     {
-        DbgPrint("MemScanner: %s: Names:%s, BaseAddr:%I64x, Size:%I64x\n", 
+        DbgPrint("[%s] Names:%s, BaseAddr:%I64x, Size:%I64x\n", 
             __FUNCTION__, 
             g_szAssignedRegionNames[ulIndex],
             lpMiSystemVaAssignment[ulIndex].BaseAddress, 
@@ -579,7 +578,7 @@ VOID MmsTestAllocatePagedPoolMemory()
     lpAddr = ExAllocatePoolWithTag(PagedPool, 256, MMS_POOL_TAG);
     if (lpAddr)
     {
-        DbgPrint("MemScanner: %s: AllocateAddress:%p\n", __FUNCTION__, lpAddr);
+        DbgPrint("[%s] AllocateAddress:%p\n", __FUNCTION__, lpAddr);
         ExFreePool(lpAddr);
     }
 }
@@ -591,7 +590,7 @@ VOID MmsTestAllocateNonPagedPoolMemory()
     lpAddr = ExAllocatePoolWithTag(NonPagedPool, 256, MMS_POOL_TAG);
     if (lpAddr)
     {
-        DbgPrint("MemScanner: %s: AllocateAddress:%p\n", __FUNCTION__, lpAddr);
+        DbgPrint("[%s] AllocateAddress:%p\n", __FUNCTION__, lpAddr);
         ExFreePool(lpAddr);
     }
 }
@@ -611,7 +610,7 @@ VOID MmsTestAllocateMDLMemory()
         PVOID lpMappedAddr = MmMapLockedPagesSpecifyCache(pMdl, KernelMode, MmNonCached, NULL, 0, 0);
         if (lpMappedAddr)
         {
-            DbgPrint("MemScanner: %s: AllocateAddress:%p\n", __FUNCTION__, lpMappedAddr);
+            DbgPrint("[%s] AllocateAddress:%p\n", __FUNCTION__, lpMappedAddr);
 
             MmUnmapLockedPages(lpMappedAddr, pMdl);
             lpMappedAddr;
@@ -675,7 +674,7 @@ VOID MmsTestMapViewInSystemSpace()
     }
 
     MmMapViewInSystemSpace(SectionObject, &MappedAddr, &MappedSize);
-    DbgPrint("MemScanner: %s: MappedAddr:%p MappedSize:%x\n", __FUNCTION__, MappedAddr, MappedSize);
+    DbgPrint("[%s] MappedAddr:%p MappedSize:%x\n", __FUNCTION__, MappedAddr, MappedSize);
 
 Cleanup:
 
@@ -716,7 +715,7 @@ VOID MmsTestAllocateContiguousMemory()
     lpVirtualAddr = MmAllocateContiguousMemory(PAGE_SIZE * 10, HighestAcceptAddress);
     if (lpVirtualAddr)
     {
-        DbgPrint("MemScanner: %s: lpVirtualAddr:%p\n", __FUNCTION__, lpVirtualAddr);
+        DbgPrint("[%s] lpVirtualAddr:%p\n", __FUNCTION__, lpVirtualAddr);
         MmFreeContiguousMemory(lpVirtualAddr);
     }
 }

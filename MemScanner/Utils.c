@@ -202,12 +202,39 @@ BOOLEAN MmsIsValidUnicodeString(PUNICODE_STRING lpuniStr)
     return TRUE;
 }
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-BOOLEAN MmsIsRealSectionObject(PSECTION SectionObject)
+BOOLEAN MmsIsRealSectionObject(PSECTION_OBJECT SectionObject)
+{
+    BOOLEAN bRet = FALSE;
+
+    if (MmsIsAddressValidLength((PVOID)((ULONG_PTR)SectionObject - sizeof(OBJECT_HEADER)), sizeof(OBJECT_HEADER) + sizeof(SECTION_OBJECT)) &&
+        MmsGetObjectType(SectionObject) == *MmSectionObjectType &&
+        (ULONG_PTR)SectionObject->Segment > (ULONG_PTR)MmSystemRangeStart &&
+        MmsIsAddressValidLength((PVOID)((ULONG_PTR)SectionObject->Segment - sizeof(OBJECT_HEADER)), sizeof(OBJECT_HEADER) + sizeof(SEGMENT_OBJECT)) &&
+        SectionObject->Segment->SizeOfSegment > 0 &&
+        SectionObject->Segment->SizeOfSegment < (ULONG_PTR)MmSystemRangeStart &&
+        SectionObject->Segment->TotalNumberOfPtes > 0 &&
+        (ULONG_PTR)SectionObject->Segment->PrototypePte > (ULONG_PTR)MmSystemRangeStart)
+    {
+        PCONTROL_AREA ControlArea = (PCONTROL_AREA)SectionObject->Segment->ControlArea;
+        if ((ULONG_PTR)ControlArea > (ULONG_PTR)MmSystemRangeStart && 
+            MmsIsAddressValidLength(ControlArea, sizeof(CONTROL_AREA)) && // sizeof(CONTROL_AREA) == 0x70/0x78/0x80 ... in all windows version
+            !ControlArea->u.Flags.BeingCreated &&
+            !ControlArea->u.Flags.BeingDeleted)
+        {
+            return TRUE;
+        }
+    }
+
+    return bRet;
+}
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+BOOLEAN MmsIsRealSectionObject2(PSECTION SectionObject)
 {
     BOOLEAN bRet = FALSE;
 
     if (MmsIsAddressValidLength((PVOID)((ULONG_PTR)SectionObject - sizeof(OBJECT_HEADER)), sizeof(OBJECT_HEADER) + sizeof(SECTION)) &&
         MmsGetObjectType(SectionObject) == *MmSectionObjectType &&
+        SectionObject->SizeOfSection > 0 &&
         SectionObject->SizeOfSection < (ULONG_PTR)MmSystemRangeStart &&
         !SectionObject->u.Flags.BeingDeleted &&
         !SectionObject->u.Flags.BeingCreated)

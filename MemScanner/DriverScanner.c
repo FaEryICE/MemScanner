@@ -5,7 +5,7 @@
 
 extern POBJECT_TYPE* IoDriverObjectType;
 
-extern DYNAMIC_DATA   dynData;
+extern DYNAMIC_DATA   g_dynData;
 extern PDRIVER_OBJECT g_DriverObject;
 //-------------------------------------------------------------------------------------------------------------------------------------
 VOID ScanDriverByDriverObjectMemory()
@@ -21,7 +21,7 @@ VOID ScanDriverByDriverObjectMemory()
     PKLDR_DATA_TABLE_ENTRY   pLdr            = NULL;
 
 
-    if (dynData.ver >= WINVER_7)
+    if (g_dynData.ver >= WINVER_7)
     {
         lpStartAddr = g_DriverObject;
         lpStartAddr = (PVOID)((ULONG_PTR)lpStartAddr & 0xFFFFFFFF00000000);
@@ -33,9 +33,9 @@ VOID ScanDriverByDriverObjectMemory()
     }
 
     lpSearchAddr = (ULONG_PTR)lpStartAddr;
-    lpEndAddr    = lpSearchAddr + ulSize;
+    lpEndAddr    = lpSearchAddr + ulSize - sizeof(DRIVER_OBJECT);
 
-    KdPrint(("MemScanner: %s: lpSearchAddr:%p lpEndAddr:%p\n", __FUNCTION__, lpSearchAddr, lpEndAddr));
+    KdPrint(("[%s] lpSearchAddr:%p lpEndAddr:%p\n", __FUNCTION__, lpSearchAddr, lpEndAddr));
 
     while (TRUE)
     {
@@ -46,11 +46,6 @@ VOID ScanDriverByDriverObjectMemory()
         else
         {
             ulEntrySize = PAGE_SIZE;
-        }
-
-        if (ulEntrySize < sizeof(DRIVER_OBJECT))
-        {
-            break;
         }
 
         if (!MmsIsAddressValidLength((PVOID)lpSearchAddr, ulEntrySize))
@@ -68,7 +63,7 @@ VOID ScanDriverByDriverObjectMemory()
             if (MmsIsRealDriverObject((PDRIVER_OBJECT)pDriverObject))
             {
                 pLdr = (PKLDR_DATA_TABLE_ENTRY)(((PDRIVER_OBJECT)pDriverObject)->DriverSection);
-                KdPrint(("MemScanner: %s: pDriverObject:%p FullName:%wZ, DllBase:%I64x, Size:%x\n", __FUNCTION__, pDriverObject, &pLdr->FullDllName, pLdr->DllBase, pLdr->SizeOfImage));
+                KdPrint(("[%s] pDriverObject:%p FullName:%wZ, DllBase:%I64x, Size:%x\n", __FUNCTION__, pDriverObject, &pLdr->FullDllName, pLdr->DllBase, pLdr->SizeOfImage));
 
                 ulCurrentSize += sizeof(DRIVER_OBJECT);
                 pDriverObject += sizeof(DRIVER_OBJECT);
@@ -100,7 +95,7 @@ VOID ScanDriverByLdrDataTableEntryMemory()
     PLDR_DATA_TABLE_ENTRY  lpLdrEntry   = NULL;
     PPOOL_HEADER           PoolHeader   = NULL;
 
-    if (dynData.ver >= WINVER_7)
+    if (g_dynData.ver >= WINVER_7)
     {
         lpStartAddr = g_DriverObject->DriverSection;
         lpStartAddr = (PVOID)((ULONG_PTR)lpStartAddr & 0xFFFFFFFF00000000);

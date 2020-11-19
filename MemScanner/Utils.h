@@ -7,6 +7,7 @@ POBJECT_TYPE MmsGetObjectType(PVOID pObject);
 ULONG        MmsGetObjectName(PVOID Object, char* szBuffer, ULONG ulBufferSize);
 BOOLEAN      MmsIsAddressValidLength(PVOID lpBuffer, ULONG Len);
 BOOLEAN      MmsIsRealDriverObject(PVOID pObject);
-BOOLEAN      MmsIsRealSectionObject(PSECTION SectionObject);
+BOOLEAN      MmsIsRealSectionObject(PSECTION_OBJECT SectionObject);
+BOOLEAN      MmsIsRealSectionObject2(PSECTION SectionObject);
 BOOLEAN      MmsIsRealFileObject(PFILE_OBJECT FileObject);
 BOOLEAN      MmsIsValidUnicodeString(PUNICODE_STRING lpuniStr);

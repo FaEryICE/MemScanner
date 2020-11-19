@@ -897,7 +897,7 @@ typedef struct _DUMP_HEADER
 } DUMP_HEADER, * PDUMP_HEADER;
 
 //0x4 bytes (sizeof)
-struct _MMSECTION_FLAGS
+typedef struct _MMSECTION_FLAGS
 {
     ULONG BeingDeleted : 1;                                                   //0x0
     ULONG BeingCreated : 1;                                                   //0x0
@@ -926,7 +926,7 @@ struct _MMSECTION_FLAGS
     ULONG PreferredFsCompressionBoundary : 1;                                 //0x0
     ULONG UsingFileExtents : 1;                                               //0x0
     ULONG PageSize64K : 1;                                                    //0x0
-};
+} MMSECTION_FLAGS, *PMMSECTION_FLAGS;
 
 struct _MMSECTION_FLAGS2
 {
@@ -1211,6 +1211,7 @@ typedef struct _CONTROL_AREA
     } u3;                                                                   //0x78
 } CONTROL_AREA, * PCONTROL_AREA;
 
+// Win10
 typedef struct _SECTION
 {
     struct _RTL_BALANCED_NODE SectionNode;                                  //0x0
@@ -1234,3 +1235,63 @@ typedef struct _SECTION
     ULONG NoValidationNeeded : 1;                                             //0x3c
 
 } SECTION, * PSECTION;
+
+
+//0x4 bytes (sizeof)
+typedef struct _MMSUBSECTION_FLAGS
+{
+    USHORT SubsectionAccessed : 1;                                            //0x0
+    USHORT Protection : 5;                                                    //0x0
+    USHORT StartingSector4132 : 10;                                           //0x0
+    USHORT SubsectionStatic : 1;                                              //0x2
+    USHORT GlobalMemory : 1;                                                  //0x2
+    USHORT DirtyPages : 1;                                                    //0x2
+    USHORT OnDereferenceList : 1;                                             //0x2
+    USHORT SectorEndOffset : 12;                                              //0x2
+} MMSUBSECTION_FLAGS, *PMMSUBSECTION_FLAGS;
+
+//0x38 bytes (sizeof)
+typedef struct _SUBSECTION
+{
+    struct _CONTROL_AREA* ControlArea;                                      //0x0
+    struct _MMPTE* SubsectionBase;                                          //0x8
+    struct _SUBSECTION* NextSubsection;                                     //0x10
+    ULONG PtesInSubsection;                                                 //0x18
+    union
+    {
+        ULONG UnusedPtes;                                                   //0x20
+        struct _RTL_AVL_TREE GlobalPerSessionHead;                          //0x20
+    };
+    union
+    {
+        ULONG LongFlags;                                                    //0x28
+        struct _MMSUBSECTION_FLAGS SubsectionFlags;                         //0x28
+    } u;                                                                    //0x28
+    ULONG StartingSector;                                                   //0x2c
+    ULONG NumberOfFullSectors;                                              //0x30
+} SUBSECTION, *PSUBSECTION;
+
+//0x40 bytes (sizeof)
+typedef struct _SEGMENT_OBJECT
+{
+    VOID* BaseAddress;                                                      //0x0
+    ULONG TotalNumberOfPtes;                                                //0x8
+    union _LARGE_INTEGER SizeOfSegment;                                     //0x10
+    ULONG NonExtendedPtes;                                                  //0x18
+    ULONG ImageCommitment;                                                  //0x1c
+    struct _CONTROL_AREA* ControlArea;                                      //0x20
+    struct _SUBSECTION* Subsection;                                         //0x28
+    struct _MMSECTION_FLAGS* MmSectionFlags;                                //0x30
+    struct _MMSUBSECTION_FLAGS* MmSubSectionFlags;                          //0x38
+} SEGMENT_OBJECT, *PSEGMENT_OBJECT;
+
+//0x30 bytes (sizeof)
+typedef struct _SECTION_OBJECT
+{
+    VOID* StartingVa;                                                       //0x0
+    VOID* EndingVa;                                                         //0x8
+    VOID* Parent;                                                           //0x10
+    VOID* LeftChild;                                                        //0x18
+    VOID* RightChild;                                                       //0x20
+    struct _SEGMENT* Segment;                                               //0x28
+} SECTION_OBJECT, *PSECTION_OBJECT;

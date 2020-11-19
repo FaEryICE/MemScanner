@@ -19,12 +19,11 @@ KeCapturePersistentThreadState(
 );
 
 //--------------------------------------------------------------------------------------------------------------
-extern DYNAMIC_DATA dynData;
+extern DYNAMIC_DATA g_dynData;
 //--------------------------------------------------------------------------------------------------------------
 PLIST_ENTRY        PsLoadedModuleList;
 PVOID              g_KernelBase          = NULL;
 ULONG              g_KernelSize          = 0;
-PKDDEBUGGER_DATA64 g_KdDebuggerDataBlock = NULL;
 KDDEBUGGER_DATA64  g_KdBlock             = { 0 };
 
 //--------------------------------------------------------------------------------------------------------------
@@ -38,8 +37,6 @@ VOID InitializeDebuggerBlock()
     if (dumpHeader)
     {
         KeCapturePersistentThreadState(&context, NULL, 0, 0, 0, 0, 0, dumpHeader);
-
-        g_KdDebuggerDataBlock = dumpHeader->KdDebuggerDataBlock;
         RtlCopyMemory(&g_KdBlock, (PUCHAR)dumpHeader + KDDEBUGGER_DATA_OFFSET, sizeof(g_KdBlock));
 
         ExFreePool(dumpHeader);
